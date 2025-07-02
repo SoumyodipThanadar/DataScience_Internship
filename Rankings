@@ -1,128 +1,101 @@
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+class Environment:
+    MAX_SCORE = 30
 
-class Company {
-    private String name;
-    private Environment environment;
-    private Social social;
-    private Governance governance;
+    def __init__(self, ghg_emissions, energy_consumption, renewable_generation):
+        self.ghg_emissions = ghg_emissions
+        self.energy_consumption = energy_consumption
+        self.renewable_generation = renewable_generation
 
-    public Company(String name, Environment environment, Social social, Governance governance) {
-        this.name = name;
-        this.environment = environment;
-        this.social = social;
-        this.governance = governance;
-    }
+    def calculate_score(self):
+        emission_score = max(0, 10 - self.ghg_emissions)
+        energy_score = max(0, 10 - (self.energy_consumption / 10000))
+        renewable_score = min(self.renewable_generation * 2, 10)
+        return emission_score + energy_score + renewable_score
 
-    public double calculateESGScore() {
-        double totalScore = environment.calculateScore() + social.calculateScore() + governance.calculateScore();
-        double maxScore = Environment.MAX_SCORE + Social.MAX_SCORE + Governance.MAX_SCORE;
-        return (totalScore / maxScore) * 100;  
-    }
 
-    public String getName() {
-        return name;
-    }
-}
+class Social:
+    MAX_SCORE = 30
 
-class Environment {
-    private double ghgEmissions;    
-    private double energyConsumption;
-    private double renewableGeneration;
-    public static final double MAX_SCORE = 30;
+    def __init__(self, training_hours, csr_spend, ltifr):
+        self.training_hours = training_hours
+        self.csr_spend = csr_spend
+        self.ltifr = ltifr
 
-    public Environment(double ghgEmissions, double energyConsumption, double renewableGeneration) {
-        this.ghgEmissions = ghgEmissions;
-        this.energyConsumption = energyConsumption;
-        this.renewableGeneration = renewableGeneration;
-    }
+    def calculate_score(self):
+        training_score = min(self.training_hours / 10, 10)
+        csr_score = min(self.csr_spend / 10, 10)
+        safety_score = max(0, 10 - self.ltifr * 10)
+        return training_score + csr_score + safety_score
 
-    public double calculateScore() {
-        double emissionScore = Math.max(0, 10 - ghgEmissions);  
-        double energyScore = Math.max(0, 10 - (energyConsumption / 10000));  
-        double renewableScore = Math.min(renewableGeneration * 2, 10);  
-        return emissionScore + energyScore + renewableScore;
-    }
-}
 
-class Social {
-    private double trainingHours;  
-    private double csrSpend;        
-    private double ltifr;          
-    public static final double MAX_SCORE = 30;
+class Governance:
+    MAX_SCORE = 30
 
-    public Social(double trainingHours, double csrSpend, double ltifr) {
-        this.trainingHours = trainingHours;
-        this.csrSpend = csrSpend;
-        this.ltifr = ltifr;
-    }
+    def __init__(self, revenue, profit, grievances_reported):
+        self.revenue = revenue
+        self.profit = profit
+        self.grievances_reported = grievances_reported
 
-    public double calculateScore() {
-        double trainingScore = Math.min(trainingHours / 10, 10);  
-        double csrScore = Math.min(csrSpend / 10, 10);  
-        double safetyScore = Math.max(0, 10 - ltifr * 10);  
-        return trainingScore + csrScore + safetyScore;
-    }
-}
+    def calculate_score(self):
+        revenue_score = min(self.revenue / 10000, 10)
+        profit_score = min(self.profit / 1000, 10)
+        grievance_score = max(0, 10 - self.grievances_reported * 0.1)
+        return revenue_score + profit_score + grievance_score
 
-class Governance {
-    private double revenue;          
-    private double profit;          
-    private int grievancesReported;  
-    public static final double MAX_SCORE = 30;
 
-    public Governance(double revenue, double profit, int grievancesReported) {
-        this.revenue = revenue;
-        this.profit = profit;
-        this.grievancesReported = grievancesReported;
-    }
+class Company:
+    def __init__(self, name, environment, social, governance):
+        self.name = name
+        self.environment = environment
+        self.social = social
+        self.governance = governance
 
-    public double calculateScore() {
-        double revenueScore = Math.min(revenue / 10000, 10);  
-        double profitScore = Math.min(profit / 1000, 10);  
-        double grievanceScore = Math.max(0, 10 - grievancesReported * 0.1);  
-        return revenueScore + profitScore + grievanceScore;
-    }
-}
+    def calculate_esg_score(self):
+        total_score = (
+            self.environment.calculate_score() +
+            self.social.calculate_score() +
+            self.governance.calculate_score()
+        )
+        max_score = (
+            Environment.MAX_SCORE +
+            Social.MAX_SCORE +
+            Governance.MAX_SCORE
+        )
+        return (total_score / max_score) * 100
 
-public class ESGRanking {
-    public static void main(String[] args) {
-        List<Company> companies = new ArrayList<>();
 
-       
-        companies.add(new Company("TCS",
-                new Environment(0.2643, 273543.33, 0.6),
-                new Social(80.86, 728, 0.24),
-                new Governance(709570, 377713.3, 0)));
-       
-        companies.add(new Company("Wipro",
-                new Environment(0.505, 700965.79, 0.766),
-                new Social(45.86, 229.4, 228894),
-                new Governance(772679.33, 127305, 478)));
+companies = [
+    Company("TCS",
+            Environment(0.2643, 273543.33, 0.6),
+            Social(80.86, 728, 0.24),
+            Governance(709570, 377713.3, 0)),
 
-        companies.add(new Company("Reliance Industries",
-                new Environment(223.66, 496070000, 0.19),
-                new Social(19.4, 1082.33, 0.063),
-                new Governance(1988228, 370514, 17)));
+    Company("Wipro",
+            Environment(0.505, 700965.79, 0.766),
+            Social(45.86, 229.4, 228894),
+            Governance(772679.33, 127305, 478)),
 
-        companies.add(new Company("Ernst & Young",
-                new Environment(1.11, 1150, 5.53),
-                new Social(32, 336.6, 0.7),
-                new Governance(4143.28, 33753.3, 850)));
+    Company("Reliance Industries",
+            Environment(223.66, 496070000, 0.19),
+            Social(19.4, 1082.33, 0.063),
+            Governance(1988228, 370514, 17)),
 
-        companies.add(new Company("Vodafone Idea",
-                new Environment(10.55, 25590, 0.25),
-                new Social(8.1, 153, 0.36),
-                new Governance(43478.37, -34604.66, 166070)));
+    Company("Ernst & Young",
+            Environment(1.11, 1150, 5.53),
+            Social(32, 336.6, 0.7),
+            Governance(4143.28, 33753.3, 850)),
 
-       
-        companies.sort(Comparator.comparingDouble(Company::calculateESGScore).reversed());
+    Company("Vodafone Idea",
+            Environment(10.55, 25590, 0.25),
+            Social(8.1, 153, 0.36),
+            Governance(43478.37, -34604.66, 166070))
+]
 
-       
-        System.out.println("Company Rankings based on ESG Score:");
-        for (int i = 0; i < companies.size(); i++) {
-            System.out.printf("%d. %s - ESG Score: %.2f\n", i + 1, companies.get(i).getName(), companies.get(i).calculateESGScore());
-        }
-    }
-}
+
+companies.sort(key=lambda c: c.calculate_esg_score(), reverse=True)
+
+
+print("Company Rankings based on ESG Score:")
+for idx, company in enumerate(companies, start=1):
+    print(f"{idx}. {company.name} - ESG Score: {company.calculate_esg_score():.2f}")
+
